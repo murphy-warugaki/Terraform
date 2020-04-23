@@ -285,11 +285,22 @@ resource "aws_lb_listener_rule" "example" {
   }
 }
 
+variable "name" {
+  type    = "string"
+  default = "test-ivy"
+}
+
+variable "azs" {
+  default = ["ap-northeast-1a", "ap-northeast-1c", "ap-northeast-1d"]
+}
+
 # ECSクラスタ
 # ホストサーバーを束ねるリソース
 # ECSサービスの大元
-resource "aws_ecs_cluster" "example" {
-  name = "test-ivy"
+module "ecs_cluster" {
+  source = "./ecs/cluster"
+
+  name = var.name
 }
 
 # タスク定義
@@ -314,8 +325,7 @@ resource "aws_ecs_task_definition" "example" {
 # タスク定義を元にタスク(コンテナ)を立ち上げ、そのコンテナとどのロードバランサ(ターゲットグループ, リスナー)を紐付ける
 resource "aws_ecs_service" "example" {
   name                              = "test-ivy"
-  cluster                           = aws_ecs_cluster.example.arn
-
+  cluster                           = module.ecs_cluster.cluster_arn
   # 起動するECSタスクのタスク定義
   task_definition                   = aws_ecs_task_definition.example.arn
 
@@ -532,7 +542,6 @@ resource "aws_s3_bucket" "artifact" {
   }
 }
 
-
 resource "aws_codepipeline" "example" {
   name     = "test-ivy"
   role_arn = module.codepipeline_role.iam_role_arn
@@ -590,7 +599,7 @@ resource "aws_codepipeline" "example" {
       input_artifacts = ["Build"]
 
       configuration = {
-        ClusterName = aws_ecs_cluster.example.name
+        ClusterName = module.ecs_cluster.cluster_name
         ServiceName = aws_ecs_service.example.name
         FileName    = "imagedefinitions.json"
       }
