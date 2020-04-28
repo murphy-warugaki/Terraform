@@ -752,19 +752,15 @@ terraform {
     region = "ap-northeast-1"
   }
 }
-
 variable "env" {
   description = "環境名"
   default     = "dev"
 }
-
 条件分岐は三項演算子として記述することが可能です。
 1環境しか作成しない場合は基本使用しませんが、複数環境作成する場合環境依存になってしまう箇所が発生します。その環境によって異なる値を振り分けるために使用することが多いです。
-
 locals {
   cidr = "${ env == "prd" ? "10.0.0.0/16" : "172.16.0.0/16" }"
 }
-
 resource "aws_vpc" "main" {
   cidr_block = "${locals.cidr}"
 }

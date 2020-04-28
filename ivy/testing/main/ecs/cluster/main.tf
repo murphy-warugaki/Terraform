@@ -2,6 +2,9 @@ variable "name" {
   type = "string"
 }
 
+# ECSクラスタ
+# ホストサーバーを束ねるリソース
+# ECSサービスの大元
 resource "aws_ecs_cluster" "this" {
   name = var.name
 }
