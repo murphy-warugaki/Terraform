@@ -1,3 +1,8 @@
+variable "name" {
+  type    = "string"
+  default = "test-ivy"
+}
+
 # vpc
 resource "aws_vpc" "example" {
   cidr_block           = "10.10.0.0/16"
@@ -9,7 +14,7 @@ resource "aws_vpc" "example" {
   enable_dns_hostnames = true
 
   tags = {
-    Name = "test-ivy"
+    Name = var.name
   }
 }
 
@@ -18,7 +23,7 @@ resource "aws_internet_gateway" "example" {
   vpc_id = aws_vpc.example.id
 
   tags = {
-    Name = "test-ivy"
+    Name = var.name
   }
 }
 
@@ -26,7 +31,7 @@ resource "aws_internet_gateway" "example" {
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.example.id
   tags = {
-    Name = "test-ivy-public"
+    Name = "${var.name}-public"
   }
 }
 
@@ -37,7 +42,7 @@ resource "aws_route" "example" {
   destination_cidr_block = "0.0.0.0/0"
 }
 
-# some subnet
+# public subnets
 resource "aws_subnet" "az1" {
   vpc_id                  = aws_vpc.example.id
   cidr_block              = "10.10.1.0/24"
@@ -48,7 +53,7 @@ resource "aws_subnet" "az1" {
   availability_zone       = "ap-northeast-1a"
 
   tags = {
-    Name = "test-ivy-1a"
+    Name = "${var.name}-1a"
   }
 }
 
@@ -63,7 +68,7 @@ resource "aws_subnet" "az2" {
   map_public_ip_on_launch = true
   availability_zone       = "ap-northeast-1c"
   tags = {
-    Name = "test-ivy-1c"
+    Name = "${var.name}-1c"
   }
 }
 
@@ -78,7 +83,7 @@ resource "aws_subnet" "az3" {
   map_public_ip_on_launch = true
   availability_zone       = "ap-northeast-1d"
   tags = {
-    Name = "test-ivy-1d"
+    Name = "${var.name}-1d"
   }
 }
 
@@ -87,13 +92,14 @@ resource "aws_route_table_association" "az3" {
   route_table_id = aws_route_table.public.id
 }
 
+# private subnets
 resource "aws_subnet" "private_az1" {
   vpc_id                  = aws_vpc.example.id
   cidr_block              = "10.10.64.0/24"
   availability_zone       = "ap-northeast-1a"
   map_public_ip_on_launch = false
   tags = {
-    Name = "test-ivy-private_1a"
+    Name = "${var.name}-private_1a"
   }
 }
 
@@ -103,7 +109,7 @@ resource "aws_subnet" "private_az2" {
   availability_zone       = "ap-northeast-1c"
   map_public_ip_on_launch = false
   tags = {
-    Name = "test-ivy-private_1c"
+    Name = "${var.name}-private_1c"
   }
 }
 
@@ -113,7 +119,7 @@ resource "aws_subnet" "private_az3" {
   availability_zone       = "ap-northeast-1d"
   map_public_ip_on_launch = false
   tags = {
-    Name = "test-ivy-private_1d"
+    Name = "${var.name}-private_1d"
   }
 }
 
@@ -122,7 +128,7 @@ resource "aws_eip" "nat_gateway_0" {
   vpc        = true
   depends_on = [aws_internet_gateway.example]
   tags = {
-    Name = "test-ivy-natgw-1a"
+    Name = "${var.name}-natgw-1a"
   }
 }
 
@@ -130,7 +136,7 @@ resource "aws_eip" "nat_gateway_1" {
   vpc        = true
   depends_on = [aws_internet_gateway.example]
   tags = {
-    Name = "test-ivy-natgw-1c"
+    Name = "${var.name}-natgw-1c"
   }
 }
 
@@ -138,7 +144,7 @@ resource "aws_eip" "nat_gateway_2" {
   vpc        = true
   depends_on = [aws_internet_gateway.example]
   tags = {
-    Name = "test-ivy-natgw-1d"
+    Name = "${var.name}-natgw-1d"
   }
 }
 
@@ -164,21 +170,21 @@ resource "aws_nat_gateway" "nat_gateway_2" {
 resource "aws_route_table" "private_0" {
   vpc_id = aws_vpc.example.id
   tags = {
-    Name = "test-ivy-private-1a"
+    Name = "${var.name}-private-1a"
   }
 }
 
 resource "aws_route_table" "private_1" {
   vpc_id = aws_vpc.example.id
   tags = {
-    Name = "test-ivy-private-1c"
+    Name = "${var.name}-private-1c"
   }
 }
 
 resource "aws_route_table" "private_2" {
   vpc_id = aws_vpc.example.id
   tags = {
-    Name = "test-ivy-private-1d"
+    Name = "${var.name}-private-1d"
   }
 }
 
@@ -214,3 +220,33 @@ resource "aws_route_table_association" "private_2" {
   subnet_id      = aws_subnet.private_az3.id
   route_table_id = aws_route_table.private_2.id
 }
+
+/*
+output "vpc_id" {
+ value = aws_vpc.example.id
+}
+
+output "subnet_public_az1_id" {
+ value = aws_subnet.az1.id
+}
+
+output "subnet_public_az2_id" {
+ value = aws_subnet.az2.id
+}
+
+output "subnet_public_az3_id" {
+ value = aws_subnet.az3.id
+}
+
+output "subnet_private_az1_id" {
+ value = aws_subnet.private_az1.id
+}
+
+output "subnet_private_az2_id" {
+ value = aws_subnet.private_az2.id
+}
+
+output "subnet_private_az3_id" {
+ value = aws_subnet.private_az3.id
+}
+*/
