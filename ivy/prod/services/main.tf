@@ -1,5 +1,5 @@
 locals {
- name          = "test-ivy"
+ name          = "prod-ivy-1"
  domain        = "test-ivy.hassyadai.com"
  s3_alb_log_id = "test-ivy-alb-log"
 }
