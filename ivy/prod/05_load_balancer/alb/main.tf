@@ -47,6 +47,10 @@ resource "aws_lb" "this" {
     bucket  = var.s3_id
     enabled = true
   }
+
+  tags = {
+    Name = local.name
+  }
 }
 
 # ALBに登録されているDNSへのアクセスを紐付ける
@@ -118,6 +122,7 @@ resource "aws_route53_record" "this" {
   }
 }
 
+/*
 output "lb_obj" {
   value = aws_lb.this
 }
@@ -125,3 +130,4 @@ output "lb_obj" {
 output "https_listener_arn" {
   value = aws_lb_listener.https.arn
 }
+*/

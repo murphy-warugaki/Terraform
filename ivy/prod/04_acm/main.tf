@@ -1,19 +1,17 @@
-variable "name" {
-  type = "string"
-}
-
-variable "domain" {
-  type = "string"
+locals {
+ name          = "prod-ivy"
+ domain        = "chat-boost.hassyadai.com"
+ s3_alb_log_id = "prod-ivy-alb-log"
 }
 
 # route53
 data "aws_route53_zone" "this" {
-  name = var.domain
+  name = local.domain
 }
 
 # ssl証明書
 resource "aws_acm_certificate" "this" {
-  domain_name = var.domain
+  domain_name = local.domain
 
   # ドメイン名を追加したい場合
   subject_alternative_names = []
@@ -25,6 +23,10 @@ resource "aws_acm_certificate" "this" {
   # 基本はリソースを削除してから、リソースを作成する
   lifecycle {
     create_before_destroy = true
+  }
+
+  tags = {
+    Name = local.name
   }
 }
 
@@ -47,6 +49,7 @@ resource "aws_acm_certificate_validation" "this" {
   validation_record_fqdns = [aws_route53_record.this.fqdn]
 }
 
+/*
 output "acm_id" {
   value = aws_acm_certificate.this.id
 }
@@ -54,3 +57,4 @@ output "acm_id" {
 output "acm_arn" {
   value = aws_acm_certificate.this.arn
 }
+*/
