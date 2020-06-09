@@ -49,7 +49,6 @@ resource "aws_subnet" "az1" {
 
   # このサブネットで起動したインスタンスにパブリックIPアドレスを自動的に割り当て
   map_public_ip_on_launch = true
-
   availability_zone       = "ap-northeast-1a"
 
   tags = {

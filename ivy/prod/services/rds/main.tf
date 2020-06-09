@@ -66,6 +66,10 @@ resource "aws_db_option_group" "this" {
   option {
     option_name = "MARIADB_AUDIT_PLUGIN"
   }
+
+  timeouts {
+    delete = "5m"
+  }
 }
 
 # データベースを稼働させるサブネット

@@ -32,27 +32,6 @@ data "aws_security_group" "redis" {
   }
 }
 
-data "aws_security_group" "http" {
-  filter {
-    name   = "tag:Name"
-    values = ["${local.name}-http-sg"]
-  }
-}
-
-data "aws_security_group" "https" {
-  filter {
-    name   = "tag:Name"
-    values = ["${local.name}-https-sg"]
-  }
-}
-
-data "aws_security_group" "ssh" {
-  filter {
-    name   = "tag:Name"
-    values = ["${local.name}-ssh-sg"]
-  }
-}
-
 # subnets
 ### private
 data "aws_subnet" "private_az1" {
@@ -106,6 +85,12 @@ data "aws_lb" "this" {
   name = local.name
 }
 
+# autoscaling base file
+data "aws_launch_configuration" "this" {
+  # s3か何かから取得した方が良さそう
+  name = "prod-ivy-amzn2-t2small-20200609080419537100000001"
+}
+
 ############################
 # resource source
 ############################
@@ -131,28 +116,6 @@ module "rds" {
 ############################
 
 # autoscaling
-# このリソースは別管理の方がよき？
-resource "aws_launch_configuration" "this" {
-  name_prefix = "${local.name}-t2micro-"
-  
-  # ami
-  image_id                    = "ami-04b2d1589ab1d972c" 
-  instance_type               = "t2.small"
-  key_name                    = "hassyadai"
-
-  security_groups = [
-    data.aws_security_group.http.id,
-    data.aws_security_group.https.id,
-    data.aws_security_group.ssh.id
-  ]
-
-  user_data = file("./apache.sh")
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
 # ヘルスチェックを行い、ECSサービスとALBを紐づかせる
 resource "aws_lb_target_group" "this" {
   name = "${local.name}-${local.client_id}-tg"
@@ -164,7 +127,7 @@ resource "aws_lb_target_group" "this" {
   protocol    = "HTTP"
 
   # ターゲットを登録解除する前にALBが待機する時間
-  deregistration_delay = 300
+  deregistration_delay = 250
 
   # コンテナへの死活監視設定
   health_check {
@@ -191,7 +154,7 @@ resource "aws_lb_target_group" "this" {
 
 resource "aws_autoscaling_group" "this" {
   name                 = "${local.name}-${local.client_id}-asg"
-  launch_configuration = aws_launch_configuration.this.id
+  launch_configuration = data.aws_launch_configuration.this.id
   availability_zones   = data.aws_availability_zones.all.names
 
   force_delete        = true
