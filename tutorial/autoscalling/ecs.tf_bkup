@@ -1,0 +1,70 @@
+# ホストサーバを束ねる"ECSクラスタ"
+# コンテナの実行単位である"タスク"
+
+resource "aws_ecs_cluster" "test-ivy" {
+  name = "test-ivy"
+}
+
+# タスク定義
+resource "aws_ecs_task_definition" "test-ivy" {
+  # prefix
+  family                   = "test-ivy"
+
+  # 2vCPU
+  cpu                      = "2048"
+
+  # 4G
+  memory                   = "4096"
+
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  container_definitions    = file("./container_definitions.json")
+}
+
+# ecsサービス ALBとの架け橋
+resource "aws_ecs_service" "test-ivy" {
+  name                              = "test-ivy"
+  cluster                           = aws_ecs_cluster.test-ivy.arn
+  task_definition                   = aws_ecs_task_definition.test-ivy.arn
+
+  # 維持するタスク数
+  desired_count                     = 2
+
+  launch_type                       = "FARGATE"
+  platform_version                  = "1.3.0"
+
+  # ヘルスチェックの猶予時間
+  health_check_grace_period_seconds = 60
+
+  # ネットワーク構成
+  network_configuration {
+    # public ip の割り当て
+    assign_public_ip = false
+    security_groups  = [module.nginx_sg.security_group_id]
+
+    subnets = [
+      aws_subnet.az1.id,
+      aws_subnet.az2.id,
+      aws_subnet.az3.id,
+    ]
+  }
+
+  # ターゲットグループ、コンテナの名前、ポート番号からロードバランサーと紐付け
+  load_balancer {
+    target_group_arn = aws_lb_target_group.test-ivy.arn
+    container_name   = "test-ivy"
+    container_port   = 80
+  }
+
+  lifecycle {
+    ignore_changes = [task_definition]
+  }
+}
+
+module "nginx_sg" {
+  source      = "./security_group"
+  name        = "nginx-sg"
+  vpc_id      = aws_vpc.test-ivy.id
+  port        = 80
+  cidr_blocks = [aws_vpc.test-ivy.cidr_block]
+}
